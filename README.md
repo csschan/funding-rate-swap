@@ -1,11 +1,19 @@
-# FundingSwap — Solana Funding Rate Swap Protocol
+# FundingSwap — Funding Rate Swap Protocol on Solana
 
-A decentralized funding rate swap protocol built on Solana. Users can hedge or speculate on perpetual contract funding rates by entering fixed/floating rate swap positions — settled against a protocol-owned AMM for instant execution and early exit.
+Perpetual traders on Solana pay funding rates that can swing from +100 bps to −50 bps per 8 hours with no warning. There is currently no on-chain primitive to hedge this risk or trade it as an asset.
+
+FundingSwap introduces **funding rate swaps** as a new tradeable instrument on Solana. A user locks in a fixed rate and exchanges it against the floating Drift funding rate over a chosen duration — turning an unpredictable cost center into a manageable, tradeable position.
+
+**What this enables:**
+- **Perp traders** lock in a fixed funding cost and eliminate rate volatility risk
+- **Rate speculators** go long or short on where funding rates are heading
+- **Arbitrageurs** exploit the spread between the implied fixed rate and the live Drift rate for near risk-free yield
+
+The protocol uses a **ProAMM** design: the protocol itself acts as the permanent counterparty, so positions fill instantly and can be closed at any time — no orderbook wait, no counterparty needed. This brings TradFi interest rate swap mechanics on-chain, fully permissionless, with Solana-native settlement in USDC.
 
 > Built for the Solana Hackathon — Perps & Prediction Markets track.
 
-**Live Demo:** [fundingswap.vercel.app](https://fundingswap.vercel.app) (Devnet)  
-**Program ID:** `EeQyJqzDEMYBSFJt7mwRkKgy5HFMGJQ3as6eKgxH8NUC`
+**Program ID:** `EeQyJqzDEMYBSFJt7mwRkKgy5HFMGJQ3as6eKgxH8NUC` (Devnet)
 
 ---
 
