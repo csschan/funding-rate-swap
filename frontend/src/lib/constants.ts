@@ -24,26 +24,40 @@ export const DRIFT_BTC_PERP_MARKET = new PublicKey(
   "Fgh9JSZ2qfSjCw9RPJ85W2xbihsp2muLvfRztzoVR7f1"
 );
 
-export const MARKETS = [
+export type FundingSource = "Drift" | "Jupiter" | "Binance";
+
+export interface MarketConfig {
+  name: string;
+  symbol: string;
+  driftMarket: PublicKey;
+  fundingSource: FundingSource;
+  fundingInterval: string; // e.g. "1h", "8h"
+  comingSoon: boolean;
+}
+
+export const MARKETS: MarketConfig[] = [
   {
     name: "SOL-PERP",
     symbol: "SOL",
     driftMarket: DRIFT_SOL_PERP_MARKET,
-    // Swap market initialized on devnet
+    fundingSource: "Drift",
+    fundingInterval: "1h",
     comingSoon: false,
   },
   {
     name: "ETH-PERP",
     symbol: "ETH",
     driftMarket: DRIFT_ETH_PERP_MARKET,
-    // Drift mainnet address for funding rate display; swap market not yet initialized on devnet
+    fundingSource: "Drift",
+    fundingInterval: "1h",
     comingSoon: true,
   },
   {
     name: "BTC-PERP",
     symbol: "BTC",
     driftMarket: DRIFT_BTC_PERP_MARKET,
-    // Drift mainnet address for funding rate display; swap market not yet initialized on devnet
+    fundingSource: "Jupiter",
+    fundingInterval: "1h",
     comingSoon: true,
   },
 ];

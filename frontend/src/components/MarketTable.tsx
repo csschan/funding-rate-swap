@@ -8,6 +8,21 @@ interface Props {
   markets: MarketData[];
 }
 
+const SOURCE_COLORS: Record<string, string> = {
+  Drift: "bg-purple-900/50 text-purple-300 border-purple-700/50",
+  Jupiter: "bg-green-900/50 text-green-300 border-green-700/50",
+  Binance: "bg-yellow-900/50 text-yellow-300 border-yellow-700/50",
+};
+
+function SourceBadge({ source, interval }: { source: string; interval: string }) {
+  const color = SOURCE_COLORS[source] ?? "bg-gray-800 text-gray-400 border-gray-700";
+  return (
+    <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border ${color}`}>
+      {source} · {interval}
+    </span>
+  );
+}
+
 function RateCell({ rate }: { rate: number }) {
   const prevRef = useRef(rate);
   const [flash, setFlash] = useState<"up" | "down" | null>(null);
@@ -60,7 +75,12 @@ export function MarketTable({ markets }: Props) {
           const spread = m.currentFundingRate - m.impliedFixedRate;
           return (
             <tr key={m.swapMarket} className="hover:bg-gray-900 transition-colors">
-              <td className="py-4 font-medium text-white">{m.name}</td>
+              <td className="py-4">
+                <div className="flex flex-col gap-1">
+                  <span className="font-medium text-white">{m.name}</span>
+                  <SourceBadge source={m.fundingSource} interval={m.fundingInterval} />
+                </div>
+              </td>
               <td className="py-4 text-right">
                 <RateCell rate={m.currentFundingRate} />
               </td>

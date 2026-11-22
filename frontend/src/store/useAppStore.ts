@@ -35,11 +35,13 @@ export interface Order {
 export interface MarketData {
   name: string;
   symbol: string;
-  currentFundingRate: number;   // bps per 8h (from Drift)
+  currentFundingRate: number;   // bps per period
   impliedFixedRate: number;     // mid of orderbook
   volume24h: number;
   driftMarket: string;
   swapMarket: string;
+  fundingSource: string;        // "Drift" | "Jupiter" | "Binance"
+  fundingInterval: string;      // "1h" | "8h"
 }
 
 interface AppState {

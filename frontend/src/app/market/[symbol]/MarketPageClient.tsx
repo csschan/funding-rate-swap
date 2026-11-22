@@ -89,7 +89,12 @@ export function MarketPageClient({ symbol }: { symbol: string }) {
               </span>
             )}
           </div>
-          <p className="text-gray-400 text-sm mt-0.5">Funding Rate Swap Market</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <p className="text-gray-400 text-sm">Funding Rate Swap Market</p>
+            <span className="text-[10px] px-1.5 py-0.5 rounded border bg-gray-800 text-gray-300 border-gray-700">
+              via {config.fundingSource} · {config.fundingInterval}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -107,10 +112,10 @@ export function MarketPageClient({ symbol }: { symbol: string }) {
           <div className={`text-lg font-bold font-mono transition-colors duration-300 ${
             rateDir === "up" ? "text-green-400" : rateDir === "down" ? "text-red-400" : "text-white"
           }`}>
-            {currentRate.toFixed(2)} bps
+            {currentRate.toFixed(2)} bps/{config.fundingInterval}
             <span className="ml-1 text-sm">{rateDir === "up" ? "▲" : rateDir === "down" ? "▼" : ""}</span>
           </div>
-          <div className="text-xs text-gray-500 mt-0.5">{(currentRate * 3 * 365 / 100).toFixed(1)}% APR</div>
+          <div className="text-xs text-gray-500 mt-0.5">{(currentRate * 3 * 365 / 100).toFixed(1)}% APR · {config.fundingSource}</div>
         </div>
 
         {[

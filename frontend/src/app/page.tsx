@@ -37,6 +37,8 @@ export default function HomePage() {
             volume24h: 0,
             driftMarket: m.driftMarket.toBase58(),
             swapMarket: swapMarket.toBase58(),
+            fundingSource: data[i]?.fundingSource ?? m.fundingSource,
+            fundingInterval: data[i]?.fundingInterval ?? m.fundingInterval,
           };
         });
         setMarkets(loaded);
