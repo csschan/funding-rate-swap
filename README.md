@@ -14,6 +14,7 @@ The protocol uses a **ProAMM** design: the protocol itself acts as the permanent
 > Built for the Solana Hackathon — Perps & Prediction Markets track.
 
 **Program ID:** `EeQyJqzDEMYBSFJt7mwRkKgy5HFMGJQ3as6eKgxH8NUC` (Devnet)
+**Protocol AMM:** `JDMRgqodDHFGCAStE92KrcV8qPBs3whsHopiMC4UMs67` (Devnet)
 
 ---
 
