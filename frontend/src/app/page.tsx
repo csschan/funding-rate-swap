@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { MarketTable } from "@/components/MarketTable";
 import { PerpPositions } from "@/components/PerpPositions";
+import { ArbitragePanel } from "@/components/ArbitragePanel";
 import { useAppStore } from "@/store/useAppStore";
 import { MARKETS, SWAP_MARKET_SEEDS } from "@/lib/constants";
 import { deriveSwapMarket } from "@/lib/pda";
@@ -26,7 +27,9 @@ export default function HomePage() {
       setLoading(true);
       try {
         const res = await fetch("/api/markets");
-        const data = res.ok ? await res.json() : [];
+        const json = res.ok ? await res.json() : { markets: [], arbitrage: [] };
+        // Handle both old format (array) and new format ({markets, arbitrage})
+        const data = Array.isArray(json) ? json : (json.markets ?? []);
         const loaded = MARKETS.map((m, i) => {
           const seed = SWAP_MARKET_SEEDS[m.symbol];
           const swapMarket = seed ? deriveSwapMarket(seed) : deriveSwapMarket(SWAP_MARKET_SEEDS.SOL);
@@ -61,6 +64,9 @@ export default function HomePage() {
 
       {/* Show user's existing perp positions with hedge buttons */}
       <PerpPositions />
+
+      {/* Cross-platform arbitrage opportunities */}
+      <ArbitragePanel />
 
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[

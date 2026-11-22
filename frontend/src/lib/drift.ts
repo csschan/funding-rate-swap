@@ -124,14 +124,18 @@ export async function fetchPacificaRates(): Promise<Record<string, number>> {
   try {
     const res = await fetch(`${PACIFICA_API}/info/prices`);
     if (!res.ok) return {};
-    const data = await res.json();
+    const json = await res.json();
+    // Response: { success: true, data: [{ symbol: "SOL", funding: "0.0000125", ... }] }
+    const items = json.data ?? json ?? [];
 
     const rates: Record<string, number> = {};
-    for (const item of data ?? []) {
-      const symbol = (item.symbol ?? "").replace("-PERP", "");
-      // funding_rate is a decimal (e.g. 0.0001 = 1 bps)
-      const rate = Number(item.funding_rate ?? 0) * 10000; // convert to bps
-      rates[symbol] = rate;
+    for (const item of items) {
+      const symbol = (item.symbol ?? "").replace("-PERP", "").replace("-USDC", "");
+      // funding is a decimal string (e.g. "0.0000125" = 0.125 bps)
+      const rate = Number(item.funding ?? 0) * 10000; // convert to bps
+      if (symbol && rate !== 0) {
+        rates[symbol] = rate;
+      }
     }
     return rates;
   } catch {

@@ -40,7 +40,8 @@ export function MarketPageClient({ symbol }: { symbol: string }) {
     async function seedHistory() {
       try {
         const res = await fetch("/api/markets");
-        const data = res.ok ? await res.json() : [];
+        const json = res.ok ? await res.json() : { markets: [] };
+        const data = Array.isArray(json) ? json : (json.markets ?? []);
         const market = data.find((m: any) => m.symbol === config!.symbol);
         setHistory(generateMockHistory(market?.fundingRate ?? 50));
       } catch {
@@ -76,19 +77,37 @@ export function MarketPageClient({ symbol }: { symbol: string }) {
 
       {/* Hedge banner — shown when navigated from "Hedge Funding" button */}
       {hedgeDirection && hedgePlatform && (
-        <div className="mb-6 p-4 rounded-xl border border-green-800/50 bg-green-900/20">
+        <div className={`mb-6 p-4 rounded-xl border ${
+          hedgePlatform?.startsWith("Arbitrage")
+            ? "border-yellow-800/50 bg-yellow-900/20"
+            : "border-green-800/50 bg-green-900/20"
+        }`}>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-green-400 text-sm font-semibold">Hedge Mode</span>
+            <span className={`text-sm font-semibold ${
+              hedgePlatform?.startsWith("Arbitrage") ? "text-yellow-400" : "text-green-400"
+            }`}>
+              {hedgePlatform?.startsWith("Arbitrage") ? "Arbitrage Mode" : "Hedge Mode"}
+            </span>
             <span className="text-[10px] px-1.5 py-0.5 rounded border bg-gray-800 text-gray-300 border-gray-700">
               {hedgePlatform}
             </span>
           </div>
           <p className="text-xs text-gray-400">
-            Auto-filled from your {hedgePlatform} {symbol.toUpperCase()}-PERP position.
-            {hedgeDirection === "fixed"
-              ? " You're Long on perps → pay fixed rate to hedge your funding cost."
-              : " You're Short on perps → pay floating to lock in your funding income."}
-            {hedgeNotional && ` Notional: $${Number(hedgeNotional).toLocaleString()}`}
+            {hedgePlatform?.startsWith("Arbitrage") ? (
+              <>
+                Cross-platform rate arbitrage on {symbol.toUpperCase()}-PERP.
+                Lock in a fixed rate via this swap — when the floating rate from the higher-rate platform exceeds your fixed rate, the spread is your profit.
+                {hedgeNotional && ` Suggested notional: $${Number(hedgeNotional).toLocaleString()}`}
+              </>
+            ) : (
+              <>
+                Auto-filled from your {hedgePlatform} {symbol.toUpperCase()}-PERP position.
+                {hedgeDirection === "fixed"
+                  ? " You're Long on perps → pay fixed rate to hedge your funding cost."
+                  : " You're Short on perps → pay floating to lock in your funding income."}
+                {hedgeNotional && ` Notional: $${Number(hedgeNotional).toLocaleString()}`}
+              </>
+            )}
           </p>
         </div>
       )}

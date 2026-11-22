@@ -7,11 +7,11 @@ FundingSwap introduces **funding rate swaps** as a new tradeable instrument on S
 **What this enables:**
 - **Perp traders** connect their Jupiter / Pacifica positions and one-click hedge their funding rate exposure
 - **Rate speculators** go long or short on where funding rates are heading
-- **Arbitrageurs** exploit the spread between the implied fixed rate and the live rate for near risk-free yield
+- **Cross-platform arbitrageurs** capture the rate spread between Jupiter and Pacifica for near risk-free yield
 
 **Supported Platforms:**
-- **Jupiter Perps** — on-chain position reading, borrow rate oracle (SOL, ETH)
-- **Pacifica** — REST API integration, 1h funding rate (BTC)
+- **Jupiter Perps** — on-chain custody account reading, borrow rate calculated via jump rate model (SOL, ETH, BTC)
+- **Pacifica** — REST API integration, real-time 1h funding rate (SOL, ETH, BTC and 70+ markets)
 
 The protocol uses a **ProAMM** design: the protocol itself acts as the permanent counterparty, so positions fill instantly and can be closed at any time — no orderbook wait, no counterparty needed. This brings TradFi interest rate swap mechanics on-chain, fully permissionless, with Solana-native settlement in USDC.
 
@@ -28,8 +28,33 @@ Funding rates on perpetual exchanges fluctuate constantly. Traders holding large
 
 | Role | You pay | You receive | Win when |
 |------|---------|-------------|----------|
-| **Fixed Payer** | Fixed rate (e.g. 45 bps/h) | Floating rate (actual Drift rate) | Funding goes up |
+| **Fixed Payer** | Fixed rate (e.g. 0.35 bps/h) | Floating rate (live rate) | Funding goes up |
 | **Floating Payer** | Floating rate | Fixed rate | Funding goes down |
+
+### Three Use Cases
+
+#### 1. Hedge — Protect your perp position
+
+Connect your wallet → FundingSwap reads your Jupiter / Pacifica perp positions → one-click **"Hedge Funding"** opens a swap that locks in your funding cost.
+
+- Long on Jupiter SOL-PERP? → Open a Fixed Payer swap to cap your borrow fee
+- Short on Pacifica BTC-PERP? → Open a Floating Payer swap to lock in your funding income
+
+#### 2. Speculate — Trade funding rates as an asset
+
+Think SOL funding rates will spike? Go Fixed Payer to profit from the rise. Think they'll drop? Go Floating Payer.
+
+#### 3. Cross-Platform Arbitrage — Capture rate spreads
+
+Jupiter charges a **borrow fee** (based on JLP pool utilization via jump rate model), while Pacifica uses a traditional **funding rate** (order-book premium). These rates diverge because they use fundamentally different pricing mechanisms.
+
+```
+Jupiter SOL borrow:    0.33 bps/h  (jump rate model, ~65% utilization)
+Pacifica SOL funding:  0.13 bps/h  (order-book premium)
+Spread:                0.20 bps/h  → capturable via funding rate swap
+```
+
+The **Cross-Platform Arbitrage** panel on the homepage shows live rate comparisons and estimated daily yield per $10k notional.
 
 ### ProAMM — Close Anytime
 
@@ -51,20 +76,35 @@ Unlike orderbook-based swaps that require a matched counterparty, FundingSwap us
 │  initialize_market    — create a swap market         │
 │  place_order          — post to orderbook            │
 │  match_orders         — match fixed/floating orders  │
-│  settle               — settle after each 8h period  │
+│  settle               — settle after each period     │
 │                                                      │
 │  initialize_amm       — create protocol AMM          │
 │  open_position_amm    — instant fill against AMM     │
 │  early_close_amm      — close anytime, get P&L       │
 └─────────────────────────────────────────────────────┘
          ↑
-┌─────────────────┐
-│   Next.js App   │
-│                 │
-│  / — markets    │
-│  /market/[sym]  │
-│  /portfolio     │
-└─────────────────┘
+┌────────────────────────────────────────────────────┐
+│                   Next.js App                       │
+│                                                     │
+│  / — markets + perp positions + arbitrage panel     │
+│  /market/[sym]  — trade (hedge mode / arb mode)     │
+│  /portfolio     — active swap positions + P&L       │
+│                                                     │
+│  /api/markets         — Jupiter + Pacifica rates    │
+│  /api/perp-positions  — read user perp positions    │
+│  /api/positions       — read swap positions         │
+└────────────────────────────────────────────────────┘
+         ↑
+┌────────────────────────────────────────────────────┐
+│              External Data Sources                  │
+│                                                     │
+│  Jupiter Perps (mainnet) — custody accounts,        │
+│    jump rate model (minRate/maxRate/targetRate),     │
+│    user position PDAs via getProgramAccounts         │
+│                                                     │
+│  Pacifica (REST API) — /info/prices for live        │
+│    funding rates, /positions for user positions     │
+└────────────────────────────────────────────────────┘
 ```
 
 **Key accounts:**
@@ -123,11 +163,11 @@ npm run dev -- -p 6001
 
 | Instruction | Description |
 |-------------|-------------|
-| `initialize_market` | Create a swap market for a Drift perp |
+| `initialize_market` | Create a swap market for a perp asset |
 | `place_order` | Post a fixed or floating rate order |
 | `cancel_order` | Cancel an unmatched order |
 | `match_orders` | Match a fixed-payer with a floating-payer |
-| `settle` | Settle one 8h funding period |
+| `settle` | Settle one funding period |
 | `add_collateral` | Top up position collateral |
 | `close_position` | Close after expiry |
 | `liquidate` | Liquidate undercollateralized position |
@@ -145,21 +185,46 @@ npm run dev -- -p 6001
 ## Rate Encoding
 
 Rates are stored as `i64` in units of **basis points × 100**:
-- Display: `45.00 bps/h`
-- On-chain: `4500`
+- Display: `0.35 bps/h`
+- On-chain: `35`
 - P&L formula: `notional × rateDiff × periods / 10_000`
 
 ---
 
-## Arbitrage Use Case
+## Data Sources
 
-If Drift's live funding rate (floating) diverges from your locked-in fixed rate, you can exit the position profitably:
+### Jupiter Perps (on-chain)
+
+Jupiter uses a **borrow fee** model instead of traditional funding rates. The borrow rate is calculated via a **jump rate model** from each custody account:
 
 ```
-Live rate:   63 bps/h
-Fixed rate:  45 bps/h
-Spread:      +18 bps → you're winning as Fixed Payer
-→ Close Now → collect P&L immediately
+Custody account offsets (confirmed):
+  offset 352: minRateBps     (u64, annual bps)
+  offset 360: maxRateBps     (u64, annual bps)
+  offset 368: targetRateBps  (u64, annual bps)
+  offset 376: targetUtilization (u64, scaled by 1e9)
+
+Rate calculation:
+  if utilization <= targetUtil:
+    yearlyBps = minRate + (targetRate - minRate) × util / targetUtil
+  else:
+    yearlyBps = targetRate + (maxRate - targetRate) × (util - targetUtil) / (1 - targetUtil)
+
+  hourlyBps = yearlyBps / 8760
+```
+
+User positions are read via `getProgramAccounts` with owner filter at offset 8.
+
+### Pacifica (REST API)
+
+```
+GET https://api.pacifica.fi/api/v1/info/prices
+→ { data: [{ symbol: "SOL", funding: "0.0000125", ... }] }
+
+funding × 10000 = bps/h
+
+GET https://api.pacifica.fi/api/v1/positions?account=<WALLET>
+→ [{ symbol, side, amount, entry_price, margin, ... }]
 ```
 
 ---
@@ -196,12 +261,25 @@ funding-rate-swap/
 │           └── errors/
 ├── frontend/
 │   └── src/
-│       ├── app/          # Next.js pages + API routes
-│       ├── components/   # UI components
-│       ├── lib/          # program.ts, pda.ts, fetchPortfolio.ts
-│       └── store/        # Zustand state
+│       ├── app/            # Next.js pages + API routes
+│       │   └── api/
+│       │       ├── markets/         # Jupiter + Pacifica rate aggregation
+│       │       ├── perp-positions/  # Read user perp positions
+│       │       └── positions/       # Read swap positions
+│       ├── components/
+│       │   ├── ArbitragePanel.tsx   # Cross-platform rate comparison
+│       │   ├── PerpPositions.tsx    # User perp positions + hedge buttons
+│       │   ├── OpenPositionForm.tsx # Swap position form (hedge/arb prefill)
+│       │   ├── PositionCard.tsx     # Active position with live P&L
+│       │   └── RateSimulator.tsx    # Mock live rate for demo
+│       ├── lib/
+│       │   ├── drift.ts            # Jupiter + Pacifica data fetchers
+│       │   ├── program.ts          # On-chain transaction builders
+│       │   ├── pda.ts              # PDA derivation helpers
+│       │   └── constants.ts        # Market configs, custody addresses
+│       └── store/                  # Zustand state
 ├── scripts/
-│   └── init-amm.ts       # Initialize AMM + fund treasury
+│   └── init-amm.ts                 # Initialize AMM + fund treasury
 └── tests/
 ```
 
