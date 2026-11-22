@@ -11,16 +11,21 @@ interface Props {
   currentRate: number;
   impliedFixedRate: number;
   onSuccess?: () => void;
+  hedgeDirection?: "fixed" | "floating" | null;
+  hedgeNotional?: number;
 }
 
 type DirectionLabel = "FixedPayer" | "FloatingPayer";
 
-export function OpenPositionForm({ currentRate, impliedFixedRate, onSuccess }: Props) {
+export function OpenPositionForm({ currentRate, impliedFixedRate, onSuccess, hedgeDirection, hedgeNotional }: Props) {
   const { publicKey, sendTransaction } = useWallet();
   const { connection } = useConnection();
 
-  const [direction, setDirection] = useState<DirectionLabel>("FixedPayer");
-  const [notional, setNotional] = useState("10000");
+  const defaultDirection: DirectionLabel = hedgeDirection === "floating" ? "FloatingPayer" : "FixedPayer";
+  const defaultNotional = hedgeNotional ? String(hedgeNotional) : "10000";
+
+  const [direction, setDirection] = useState<DirectionLabel>(defaultDirection);
+  const [notional, setNotional] = useState(defaultNotional);
   const [fixedRate, setFixedRate] = useState(impliedFixedRate.toFixed(2));
   const [durationIdx, setDurationIdx] = useState(0);
   const [leverage, setLeverage] = useState(1);
@@ -141,7 +146,7 @@ export function OpenPositionForm({ currentRate, impliedFixedRate, onSuccess }: P
       <div>
         <div className="flex justify-between items-center mb-2">
           <label className="text-xs text-gray-400">
-            {direction === "FixedPayer" ? "Max Fixed Rate (bps/8h)" : "Min Fixed Rate (bps/8h)"}
+            {direction === "FixedPayer" ? "Max Fixed Rate (bps/h)" : "Min Fixed Rate (bps/h)"}
           </label>
           <span className="text-xs text-gray-500">
             Market: <span className="text-indigo-400">{impliedFixedRate.toFixed(2)}</span>
@@ -221,11 +226,11 @@ export function OpenPositionForm({ currentRate, impliedFixedRate, onSuccess }: P
         </div>
         <div className="flex justify-between">
           <span className="text-gray-400">Duration</span>
-          <span className="text-white">{duration.periods} × 8h ({duration.label})</span>
+          <span className="text-white">{duration.periods}h ({duration.label})</span>
         </div>
         <div className="flex justify-between">
           <span className="text-gray-400">Fixed Rate</span>
-          <span className="text-indigo-400 font-mono">{rateNum.toFixed(2)} bps/8h</span>
+          <span className="text-indigo-400 font-mono">{rateNum.toFixed(2)} bps/h</span>
         </div>
 
         {/* Scenario table */}
@@ -245,7 +250,7 @@ export function OpenPositionForm({ currentRate, impliedFixedRate, onSuccess }: P
               return (
                 <div key={scenarioRate} className="flex justify-between text-xs items-center">
                   <span className="text-gray-400 font-mono">
-                    {scenarioRate.toFixed(1)} bps/8h
+                    {scenarioRate.toFixed(1)} bps/h
                     {isBreakeven && <span className="text-gray-600 ml-1">(breakeven)</span>}
                   </span>
                   <span className={`font-mono font-semibold ${pnl > 0 ? "text-green-400" : pnl < 0 ? "text-red-400" : "text-gray-400"}`}>

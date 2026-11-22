@@ -1,13 +1,17 @@
 # FundingSwap — Funding Rate Swap Protocol on Solana
 
-Perpetual traders on Solana pay funding rates that can swing from +100 bps to −50 bps per 8 hours with no warning. There is currently no on-chain primitive to hedge this risk or trade it as an asset.
+Perpetual traders on Solana pay funding rates that change every hour on Jupiter, every hour on Pacifica — unpredictable, and there is currently no on-chain primitive to hedge this risk or trade it as an asset.
 
-FundingSwap introduces **funding rate swaps** as a new tradeable instrument on Solana. A user locks in a fixed rate and exchanges it against the floating Drift funding rate over a chosen duration — turning an unpredictable cost center into a manageable, tradeable position.
+FundingSwap introduces **funding rate swaps** as a new tradeable instrument on Solana. A user locks in a fixed rate and exchanges it against the live floating funding rate over a chosen duration — turning an unpredictable cost center into a manageable, tradeable position.
 
 **What this enables:**
-- **Perp traders** lock in a fixed funding cost and eliminate rate volatility risk
+- **Perp traders** connect their Jupiter / Pacifica positions and one-click hedge their funding rate exposure
 - **Rate speculators** go long or short on where funding rates are heading
-- **Arbitrageurs** exploit the spread between the implied fixed rate and the live Drift rate for near risk-free yield
+- **Arbitrageurs** exploit the spread between the implied fixed rate and the live rate for near risk-free yield
+
+**Supported Platforms:**
+- **Jupiter Perps** — on-chain position reading, borrow rate oracle (SOL, ETH)
+- **Pacifica** — REST API integration, 1h funding rate (BTC)
 
 The protocol uses a **ProAMM** design: the protocol itself acts as the permanent counterparty, so positions fill instantly and can be closed at any time — no orderbook wait, no counterparty needed. This brings TradFi interest rate swap mechanics on-chain, fully permissionless, with Solana-native settlement in USDC.
 
@@ -24,7 +28,7 @@ Funding rates on perpetual exchanges fluctuate constantly. Traders holding large
 
 | Role | You pay | You receive | Win when |
 |------|---------|-------------|----------|
-| **Fixed Payer** | Fixed rate (e.g. 45 bps/8h) | Floating rate (actual Drift rate) | Funding goes up |
+| **Fixed Payer** | Fixed rate (e.g. 45 bps/h) | Floating rate (actual Drift rate) | Funding goes up |
 | **Floating Payer** | Floating rate | Fixed rate | Funding goes down |
 
 ### ProAMM — Close Anytime
@@ -141,7 +145,7 @@ npm run dev -- -p 6001
 ## Rate Encoding
 
 Rates are stored as `i64` in units of **basis points × 100**:
-- Display: `45.00 bps/8h`
+- Display: `45.00 bps/h`
 - On-chain: `4500`
 - P&L formula: `notional × rateDiff × periods / 10_000`
 
@@ -152,8 +156,8 @@ Rates are stored as `i64` in units of **basis points × 100**:
 If Drift's live funding rate (floating) diverges from your locked-in fixed rate, you can exit the position profitably:
 
 ```
-Live rate:   63 bps/8h
-Fixed rate:  45 bps/8h
+Live rate:   63 bps/h
+Fixed rate:  45 bps/h
 Spread:      +18 bps → you're winning as Fixed Payer
 → Close Now → collect P&L immediately
 ```
@@ -168,7 +172,7 @@ Spread:      +18 bps → you're winning as Fixed Payer
 | Token Standard | SPL Token (USDC) |
 | Frontend | Next.js 15, Tailwind v4, Zustand |
 | Wallet | Solana Wallet Adapter (Phantom, Solflare) |
-| Funding Rate Data | Drift Protocol (mainnet read) |
+| Funding Rate Data | Jupiter Perps (on-chain), Pacifica (REST API) |
 
 ---
 

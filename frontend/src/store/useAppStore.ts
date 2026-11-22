@@ -7,11 +7,11 @@ export interface Position {
   fixedPayer: string;
   floatingPayer: string;
   notional: number;       // USDC (6 decimals raw → display as /1e6)
-  fixedRate: number;      // bps per 8h
+  fixedRate: number;      // bps per period
   startTime: number;
   totalPeriods: number;
   settledPeriods: number;
-  lastFundingRate: number; // last observed floating rate (bps/8h)
+  lastFundingRate: number; // last observed floating rate
   lastSettledAt: number;
   fixedVault: string;
   floatingVault: string;
@@ -38,22 +38,35 @@ export interface MarketData {
   currentFundingRate: number;   // bps per period
   impliedFixedRate: number;     // mid of orderbook
   volume24h: number;
-  driftMarket: string;
   swapMarket: string;
-  fundingSource: string;        // "Drift" | "Jupiter" | "Binance"
-  fundingInterval: string;      // "1h" | "8h"
+  fundingSource: string;        // "Jupiter" | "Pacifica"
+  fundingInterval: string;      // "1h"
+}
+
+// Perp position from Jupiter / Pacifica
+export interface PerpPositionData {
+  platform: "Jupiter" | "Pacifica";
+  symbol: string;
+  side: "Long" | "Short";
+  sizeUsd: number;
+  collateralUsd: number;
+  entryPrice: number;
+  leverage: number;
+  owner: string;
 }
 
 interface AppState {
   markets: MarketData[];
   myPositions: Position[];
   myOrders: Order[];
+  perpPositions: PerpPositionData[];
   isLoading: boolean;
-  liveRate: number; // mock live funding rate for demo P&L display
+  liveRate: number;
 
   setMarkets: (m: MarketData[]) => void;
   setMyPositions: (p: Position[]) => void;
   setMyOrders: (o: Order[]) => void;
+  setPerpPositions: (p: PerpPositionData[]) => void;
   setLoading: (v: boolean) => void;
   updateMarketRate: (swapMarket: string, rate: number) => void;
   setLiveRate: (rate: number) => void;
@@ -63,12 +76,14 @@ export const useAppStore = create<AppState>((set) => ({
   markets: [],
   myPositions: [],
   myOrders: [],
+  perpPositions: [],
   isLoading: false,
   liveRate: 50,
 
   setMarkets: (markets) => set({ markets }),
   setMyPositions: (myPositions) => set({ myPositions }),
   setMyOrders: (myOrders) => set({ myOrders }),
+  setPerpPositions: (perpPositions) => set({ perpPositions }),
   setLoading: (isLoading) => set({ isLoading }),
   setLiveRate: (liveRate) => set({ liveRate }),
   updateMarketRate: (swapMarket, rate) =>

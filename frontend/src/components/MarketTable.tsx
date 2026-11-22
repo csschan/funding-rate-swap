@@ -9,9 +9,8 @@ interface Props {
 }
 
 const SOURCE_COLORS: Record<string, string> = {
-  Drift: "bg-purple-900/50 text-purple-300 border-purple-700/50",
-  Jupiter: "bg-green-900/50 text-green-300 border-green-700/50",
-  Binance: "bg-yellow-900/50 text-yellow-300 border-yellow-700/50",
+  Jupiter: "bg-purple-900/50 text-purple-300 border-purple-700/50",
+  Pacifica: "bg-cyan-900/50 text-cyan-300 border-cyan-700/50",
 };
 
 function SourceBadge({ source, interval }: { source: string; interval: string }) {

@@ -182,7 +182,7 @@ export function PositionCard({ position, walletKey, onRefresh }: Props) {
         <div>
           <div className="text-gray-500 text-xs mb-0.5">Fixed Rate</div>
           <div className="text-indigo-400 font-mono font-medium">
-            {fixedRateDisplay.toFixed(2)} bps/8h
+            {fixedRateDisplay.toFixed(2)} bps/h
           </div>
         </div>
         <div>
@@ -198,7 +198,7 @@ export function PositionCard({ position, walletKey, onRefresh }: Props) {
           <div className={`font-mono font-medium transition-colors duration-500 ${
             effectiveRate >= fixedRateDisplay ? "text-green-400" : "text-red-400"
           }`}>
-            {effectiveRate.toFixed(2)} bps/8h
+            {effectiveRate.toFixed(2)} bps/h
           </div>
         </div>
         <div>

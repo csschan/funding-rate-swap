@@ -67,11 +67,11 @@ function concatBytes(...arrays: Uint8Array[]): Uint8Array {
 export async function buildInitializeMarketTx(
   connection: Connection,
   authority: PublicKey,
-  driftMarket: PublicKey
+  marketSeed: PublicKey
 ): Promise<Transaction> {
-  const market = deriveSwapMarket(driftMarket);
+  const market = deriveSwapMarket(marketSeed);
 
-  const data = concatBytes(DISC.initialize_market, driftMarket.toBytes());
+  const data = concatBytes(DISC.initialize_market, marketSeed.toBytes());
 
   const ix = new TransactionInstruction({
     programId: PROGRAM_ID,
@@ -93,7 +93,7 @@ export async function buildInitializeMarketTx(
 export async function buildPlaceOrderTx(
   connection: Connection,
   owner: PublicKey,
-  driftMarket: PublicKey,
+  marketSeed: PublicKey,
   params: {
     direction: Direction;
     notional: bigint;      // USDC raw (6 decimals)
@@ -102,7 +102,7 @@ export async function buildPlaceOrderTx(
     collateralAmount: bigint;
   }
 ): Promise<Transaction> {
-  const market = deriveSwapMarket(driftMarket);
+  const market = deriveSwapMarket(marketSeed);
 
   // Fetch current order_count from market account to derive order PDA
   const marketInfo = await connection.getAccountInfo(market);
@@ -261,9 +261,9 @@ export async function buildClosePositionTx(
 // ── Fetch market order count ───────────────────────────────────
 export async function fetchMarketOrderCount(
   connection: Connection,
-  driftMarket: PublicKey
+  marketSeed: PublicKey
 ): Promise<bigint> {
-  const market = deriveSwapMarket(driftMarket);
+  const market = deriveSwapMarket(marketSeed);
   const info = await connection.getAccountInfo(market);
   if (!info) return BigInt(0);
   const view = new DataView(info.data.buffer, info.data.byteOffset, info.data.byteLength);
@@ -272,9 +272,9 @@ export async function fetchMarketOrderCount(
 
 export async function isMarketInitialized(
   connection: Connection,
-  driftMarket: PublicKey
+  marketSeed: PublicKey
 ): Promise<boolean> {
-  const market = deriveSwapMarket(driftMarket);
+  const market = deriveSwapMarket(marketSeed);
   const info = await connection.getAccountInfo(market);
   return info !== null;
 }
@@ -360,7 +360,7 @@ export async function buildEarlyCloseAmmTx(
   connection: Connection,
   caller: PublicKey,
   positionId: bigint,
-  currentRate: bigint, // current Drift funding rate in integer bps
+  currentRate: bigint, // current funding rate in integer bps
 ): Promise<Transaction> {
   const amm = deriveProtocolAmm();
   const ammTreasury = deriveAmmTreasury();

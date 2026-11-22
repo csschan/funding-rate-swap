@@ -12,9 +12,9 @@ function textToBytes(s: string): Uint8Array {
   return new TextEncoder().encode(s);
 }
 
-export function deriveSwapMarket(driftMarket: PublicKey): PublicKey {
+export function deriveSwapMarket(marketSeed: PublicKey): PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [textToBytes("swap_market"), driftMarket.toBuffer()],
+    [textToBytes("swap_market"), marketSeed.toBuffer()],
     PROGRAM_ID
   );
   return pda;

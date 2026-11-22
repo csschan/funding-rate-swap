@@ -2,8 +2,9 @@
 
 import { useEffect } from "react";
 import { MarketTable } from "@/components/MarketTable";
+import { PerpPositions } from "@/components/PerpPositions";
 import { useAppStore } from "@/store/useAppStore";
-import { MARKETS } from "@/lib/constants";
+import { MARKETS, SWAP_MARKET_SEEDS } from "@/lib/constants";
 import { deriveSwapMarket } from "@/lib/pda";
 
 export default function HomePage() {
@@ -27,7 +28,8 @@ export default function HomePage() {
         const res = await fetch("/api/markets");
         const data = res.ok ? await res.json() : [];
         const loaded = MARKETS.map((m, i) => {
-          const swapMarket = deriveSwapMarket(m.driftMarket);
+          const seed = SWAP_MARKET_SEEDS[m.symbol];
+          const swapMarket = seed ? deriveSwapMarket(seed) : deriveSwapMarket(SWAP_MARKET_SEEDS.SOL);
           const rate = data[i]?.fundingRate ?? 50;
           return {
             name: m.name,
@@ -35,7 +37,6 @@ export default function HomePage() {
             currentFundingRate: rate,
             impliedFixedRate: rate * 0.9,
             volume24h: 0,
-            driftMarket: m.driftMarket.toBase58(),
             swapMarket: swapMarket.toBase58(),
             fundingSource: data[i]?.fundingSource ?? m.fundingSource,
             fundingInterval: data[i]?.fundingInterval ?? m.fundingInterval,
@@ -57,6 +58,9 @@ export default function HomePage() {
           Hedge or speculate on perpetual contract funding rates. Pay fixed, receive floating — or vice versa.
         </p>
       </div>
+
+      {/* Show user's existing perp positions with hedge buttons */}
+      <PerpPositions />
 
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[
