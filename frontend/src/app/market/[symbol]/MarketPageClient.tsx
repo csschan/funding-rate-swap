@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { FundingRateChart } from "@/components/FundingRateChart";
 import { OpenPositionForm } from "@/components/OpenPositionForm";
 import { OrderBook } from "@/components/OrderBook";
-import { generateMockHistory } from "@/lib/drift";
+import { generateMockHistory } from "@/lib/funding";
 import { MARKETS, SWAP_MARKET_SEEDS } from "@/lib/constants";
 import { deriveSwapMarket } from "@/lib/pda";
 import { useAppStore } from "@/store/useAppStore";

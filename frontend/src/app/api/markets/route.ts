@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { Connection, PublicKey } from "@solana/web3.js";
-import { fetchPacificaRates } from "@/lib/drift";
+import { fetchPacificaRates } from "@/lib/funding";
 
 const MAINNET_RPC = "https://api.mainnet-beta.solana.com";
 

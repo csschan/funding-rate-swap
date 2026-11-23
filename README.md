@@ -1,19 +1,42 @@
 # FundingSwap — Funding Rate Swap Protocol on Solana
 
-Perpetual traders on Solana pay funding rates that change every hour on Jupiter, every hour on Pacifica — unpredictable, and there is currently no on-chain primitive to hedge this risk or trade it as an asset.
+## The Problem
 
-FundingSwap introduces **funding rate swaps** as a new tradeable instrument on Solana. A user locks in a fixed rate and exchanges it against the live floating funding rate over a chosen duration — turning an unpredictable cost center into a manageable, tradeable position.
+Billions of dollars in perpetual positions on Solana are exposed to **funding rate risk** with zero protection. Funding rates on Jupiter Perps and Pacifica can swing wildly every hour — a leveraged long paying 0.1 bps/h today could be paying 5 bps/h tomorrow. There is no on-chain primitive to hedge, trade, or arbitrage this risk.
 
-**What this enables:**
-- **Perp traders** connect their Jupiter / Pacifica positions and one-click hedge their funding rate exposure
-- **Rate speculators** go long or short on where funding rates are heading
-- **Cross-platform arbitrageurs** capture the rate spread between Jupiter and Pacifica for near risk-free yield
+## The Solution
 
-**Supported Platforms:**
-- **Jupiter Perps** — on-chain custody account reading, borrow rate calculated via jump rate model (SOL, ETH, BTC)
-- **Pacifica** — REST API integration, real-time 1h funding rate (SOL, ETH, BTC and 70+ markets)
+FundingSwap introduces **funding rate swaps** — a new tradeable asset class on Solana. Lock in a fixed funding rate and swap it against the live floating rate. If the floating rate moves against you, the swap pays you the difference.
 
-The protocol uses a **ProAMM** design: the protocol itself acts as the permanent counterparty, so positions fill instantly and can be closed at any time — no orderbook wait, no counterparty needed. This brings TradFi interest rate swap mechanics on-chain, fully permissionless, with Solana-native settlement in USDC.
+| Role | You pay | You receive | You profit when |
+|------|---------|-------------|-----------------|
+| **Fixed Payer** | Fixed rate you choose | Live floating rate | Floating rate rises above your fixed rate |
+| **Floating Payer** | Live floating rate | Fixed rate | Floating rate drops below the fixed rate |
+
+### Use Case 1: Hedge
+
+You hold a leveraged SOL long on Jupiter — you're paying an hourly borrow fee that could spike anytime. Open a **Fixed Payer** swap on FundingSwap to cap that cost. If the borrow fee spikes, the swap pays you the difference.
+
+Connect wallet → FundingSwap reads your Jupiter / Pacifica positions → one-click **"Hedge Funding"** pre-fills a swap matching your position.
+
+### Use Case 2: Speculate
+
+No perp position needed. Think funding rates are going up? Go Fixed Payer. Think they're going down? Go Floating Payer. Trade funding rates as a standalone asset with up to 10x leverage.
+
+### Use Case 3: Cross-Platform Arbitrage
+
+Jupiter uses a **borrow fee** model (based on JLP pool utilization). Pacifica uses a traditional **funding rate** (order-book premium). These are fundamentally different pricing mechanisms — when they diverge on the same asset, the spread is capturable profit.
+
+The homepage shows a live **Cross-Platform Arbitrage** panel comparing rates from both platforms with estimated daily yield.
+
+### ProAMM — Instant Fill, Close Anytime
+
+The protocol itself acts as the permanent counterparty via a **Protocol AMM**:
+
+- Open a position instantly — no orderbook, no waiting for a match
+- Close at **any time** before expiry with real-time P&L
+- P&L = `notional × (currentRate − fixedRate) × elapsedPeriods / 10,000`
+- Supports leverage (1x–10x) on the notional
 
 > Built for the Solana Hackathon — Perps & Prediction Markets track.
 
@@ -22,48 +45,12 @@ The protocol uses a **ProAMM** design: the protocol itself acts as the permanent
 
 ---
 
-## What It Does
+## Supported Platforms
 
-Funding rates on perpetual exchanges fluctuate constantly. Traders holding large perp positions face unpredictable funding costs. FundingSwap lets them lock in a fixed rate.
-
-| Role | You pay | You receive | Win when |
-|------|---------|-------------|----------|
-| **Fixed Payer** | Fixed rate (e.g. 0.35 bps/h) | Floating rate (live rate) | Funding goes up |
-| **Floating Payer** | Floating rate | Fixed rate | Funding goes down |
-
-### Three Use Cases
-
-#### 1. Hedge — Protect your perp position
-
-Connect your wallet → FundingSwap reads your Jupiter / Pacifica perp positions → one-click **"Hedge Funding"** opens a swap that locks in your funding cost.
-
-- Long on Jupiter SOL-PERP? → Open a Fixed Payer swap to cap your borrow fee
-- Short on Pacifica BTC-PERP? → Open a Floating Payer swap to lock in your funding income
-
-#### 2. Speculate — Trade funding rates as an asset
-
-Think SOL funding rates will spike? Go Fixed Payer to profit from the rise. Think they'll drop? Go Floating Payer.
-
-#### 3. Cross-Platform Arbitrage — Capture rate spreads
-
-Jupiter charges a **borrow fee** (based on JLP pool utilization via jump rate model), while Pacifica uses a traditional **funding rate** (order-book premium). These rates diverge because they use fundamentally different pricing mechanisms.
-
-```
-Jupiter SOL borrow:    0.33 bps/h  (jump rate model, ~65% utilization)
-Pacifica SOL funding:  0.13 bps/h  (order-book premium)
-Spread:                0.20 bps/h  → capturable via funding rate swap
-```
-
-The **Cross-Platform Arbitrage** panel on the homepage shows live rate comparisons and estimated daily yield per $10k notional.
-
-### ProAMM — Close Anytime
-
-Unlike orderbook-based swaps that require a matched counterparty, FundingSwap uses a **Protocol AMM** as the permanent counterparty:
-
-- Open a position instantly — no waiting for a match
-- Close at **any time** before expiry with real-time P&L
-- P&L = `notional × (currentRate − fixedRate) × elapsedPeriods / 10,000`
-- Supports leverage (1x–10x) on the notional position
+| Platform | Rate Model | Data Source | Assets |
+|----------|-----------|-------------|--------|
+| **Jupiter Perps** | Hourly borrow fee (jump rate model based on JLP utilization) | On-chain custody accounts | SOL, ETH, BTC |
+| **Pacifica** | Hourly funding rate (order-book premium) | REST API (`/info/prices`) | SOL, ETH, BTC + 70 markets |
 
 ---
 
@@ -86,7 +73,7 @@ Unlike orderbook-based swaps that require a matched counterparty, FundingSwap us
 ┌────────────────────────────────────────────────────┐
 │                   Next.js App                       │
 │                                                     │
-│  / — markets + perp positions + arbitrage panel     │
+│  / — markets + arbitrage panel + perp positions     │
 │  /market/[sym]  — trade (hedge mode / arb mode)     │
 │  /portfolio     — active swap positions + P&L       │
 │                                                     │
@@ -185,8 +172,7 @@ npm run dev -- -p 6001
 ## Rate Encoding
 
 Rates are stored as `i64` in units of **basis points × 100**:
-- Display: `0.35 bps/h`
-- On-chain: `35`
+- On-chain value `4500` = display `45.00 bps/h`
 - P&L formula: `notional × rateDiff × periods / 10_000`
 
 ---
@@ -195,13 +181,13 @@ Rates are stored as `i64` in units of **basis points × 100**:
 
 ### Jupiter Perps (on-chain)
 
-Jupiter uses a **borrow fee** model instead of traditional funding rates. The borrow rate is calculated via a **jump rate model** from each custody account:
+Jupiter uses a **borrow fee** model. The rate is calculated via a **jump rate model** from each custody account:
 
 ```
-Custody account offsets (confirmed):
-  offset 352: minRateBps     (u64, annual bps)
-  offset 360: maxRateBps     (u64, annual bps)
-  offset 368: targetRateBps  (u64, annual bps)
+Custody account offsets:
+  offset 352: minRateBps        (u64, annual bps)
+  offset 360: maxRateBps        (u64, annual bps)
+  offset 368: targetRateBps     (u64, annual bps)
   offset 376: targetUtilization (u64, scaled by 1e9)
 
 Rate calculation:
@@ -213,7 +199,7 @@ Rate calculation:
   hourlyBps = yearlyBps / 8760
 ```
 
-User positions are read via `getProgramAccounts` with owner filter at offset 8.
+User positions: `getProgramAccounts` with owner filter at offset 8, position account size 218 bytes.
 
 ### Pacifica (REST API)
 
@@ -271,9 +257,9 @@ funding-rate-swap/
 │       │   ├── PerpPositions.tsx    # User perp positions + hedge buttons
 │       │   ├── OpenPositionForm.tsx # Swap position form (hedge/arb prefill)
 │       │   ├── PositionCard.tsx     # Active position with live P&L
-│       │   └── RateSimulator.tsx    # Mock live rate for demo
+│       │   └── RateSimulator.tsx    # Live rate simulation for demo
 │       ├── lib/
-│       │   ├── drift.ts            # Jupiter + Pacifica data fetchers
+│       │   ├── funding.ts          # Jupiter + Pacifica data fetchers
 │       │   ├── program.ts          # On-chain transaction builders
 │       │   ├── pda.ts              # PDA derivation helpers
 │       │   └── constants.ts        # Market configs, custody addresses

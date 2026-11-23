@@ -62,12 +62,6 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* Show user's existing perp positions with hedge buttons */}
-      <PerpPositions />
-
-      {/* Cross-platform arbitrage opportunities */}
-      <ArbitragePanel />
-
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[
           { label: "Total Volume", value: "$0" },
@@ -81,7 +75,7 @@ export default function HomePage() {
         ))}
       </div>
 
-      <div className="bg-gray-950 border border-gray-800 rounded-xl p-6">
+      <div className="bg-gray-950 border border-gray-800 rounded-xl p-6 mb-8">
         <h2 className="text-sm font-semibold text-gray-400 uppercase mb-4">Markets</h2>
         {isLoading && markets.length === 0 ? (
           <div className="text-center py-16 text-gray-500">Loading...</div>
@@ -89,6 +83,12 @@ export default function HomePage() {
           <MarketTable markets={markets} />
         )}
       </div>
+
+      {/* Cross-platform arbitrage opportunities */}
+      <ArbitragePanel />
+
+      {/* Show user's existing perp positions with hedge buttons */}
+      <PerpPositions />
     </main>
   );
 }

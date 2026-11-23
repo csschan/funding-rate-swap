@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
-import { fetchJupiterPositions, fetchPacificaPositions } from "@/lib/drift";
+import { fetchJupiterPositions, fetchPacificaPositions } from "@/lib/funding";
 
 export async function GET(req: NextRequest) {
   const wallet = req.nextUrl.searchParams.get("wallet");
